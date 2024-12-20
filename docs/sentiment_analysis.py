@@ -3,8 +3,8 @@ from sekvo.core.prompt_pipe import ParallelPrompt, FilterPrompt, BatchPrompt
 from sekvo.providers.anthropic.generate import AnthropicProvider
 
 # Initialize the Anthropic providers with example environment names (adjust your env config as needed)
-provider1 = AnthropicProvider(env_name="anthropic-test1")
-provider2 = AnthropicProvider(env_name="anthropic-test2")
+provider1 = AnthropicProvider(env_name="anthropic-dev")
+provider2 = AnthropicProvider(env_name="anthropic-dev")
 
 # Sample customer feedback
 feedbacks = [
