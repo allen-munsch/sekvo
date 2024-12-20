@@ -56,6 +56,10 @@ cat prompt.txt page.txt | sekvo anthropic.generate
 
 ## More Usage Examples
 
+## Examples
+
+More examples: [Located here](docs/)
+
 ### Basic Prompt Processing
 
 ```python
