@@ -77,7 +77,7 @@ class SekvoSettings(BaseSettings):
             if provider_config is None:
                 raise ValueError(
                     f"No configuration found for provider: {provider} for"
-                    " {env_name} in {env_dir} do the ENV vars exist "
+                    f" {env_name} in {env_dir} do the ENV vars exist "
                     "in the .env directory?"
                 )
 
