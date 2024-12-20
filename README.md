@@ -7,10 +7,14 @@ With Sekvo, you can easily chain prompts, use multiple providers, collect metric
 # quick usage and installation example
 
 ```
+# via git
 cd sekvo/
 pyenv install 3.13.1
 python -m venv venv_3131/
 pip isntall -e '.[all]'
+
+# via pypi
+pip install sekvo
 
 
 # add your key to .env/.env.anthropic.dev
