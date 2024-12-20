@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"  # Redis port
+      - "8001:8001"  # RedisInsight port
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    volumes:
+      - .:/app  # Mounts current directory
+      - pip_cache:/root/.cache/pip  # Cache pip packages
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      bash -c "pip install -e . &&
+               celery -A tasks worker --loglevel=info"
+    deploy:
+      replicas: 2
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    volumes:
+      - .:/app
+      - pip_cache:/root/.cache/pip
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      bash -c "pip install -r requirements.txt &&
+               celery -A tasks beat --loglevel=info"
+
+  flower:
+    image: mher/flower
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+    depends_on:
+      - redis
+      - celery_worker
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "8002:8001"
+    volumes:
+      - redisinsight_data:/db
+    depends_on:
+      - redis
+
+volumes:
+  redis_data:
+  redisinsight_data:
+  pip_cache:

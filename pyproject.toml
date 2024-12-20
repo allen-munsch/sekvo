@@ -1,0 +1,119 @@
+[project]
+name = "sekvo"
+version = "0.1.0"
+description = "Your project description"
+authors = []
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pip==24.2",
+    "pyproject-freeze==0.1.1",
+    "tomlkit==0.13.2",
+    "pydantic>=2.0.0",
+    "click",
+    "rich",
+    "pydantic-settings"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+sekvo = "sekvo.cli:main"
+
+[project.optional-dependencies]
+anthropic = [
+    "anthropic>=0.18.0",
+]
+openai = [
+    "openai>=1.12.0",
+]
+vertexai = [
+    "google-cloud-aiplatform>=1.40.0",
+]
+all = [
+    "anthropic>=0.18.0",
+    "openai>=1.12.0",
+    "google-cloud-aiplatform>=1.40.0",
+]
+dev = [
+    "ruff>=0.3.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.8.0",
+]
+
+[tool.hatch.version]
+path = "src/sekvo/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sekvo"]
+
+[tool.hatch.envs.default]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=sekvo {args:tests}"
+lint = "ruff check ."
+format = "ruff format ."
+typecheck = "mypy src/sekvo"
+
+# Development environment with all extras
+[tool.hatch.envs.dev]
+features = ["dev", "all"]
+
+[tool.ruff]
+# Enable pycodestyle (`E`), Pyflakes (`F`), and import sorting (`I`)
+select = ["E", "F", "I", "N", "W", "C90", "B", "UP", "ANN", "RUF"]
+ignore = ["ANN001"]  # Ignore missing type annotations for self
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.13
+target-version = "py313"
+
+[tool.ruff.lint]
+# Ignore `E402` (import violations) in all `__init__.py` files
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "integration: marks tests as integration tests",
+]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = ["Test*", "*Tests"]
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["sekvo"]
+omit = ["tests/*"]
