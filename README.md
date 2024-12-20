@@ -1,9 +1,12 @@
+![Sekvo logo](./docs/sekvo-logo.jpg)
+
 # sekvo
 
 Sekvo is a simple and flexible Python library for piping and processing of prompts through various AI providers. 
 
 With Sekvo, you can easily chain prompts, use multiple providers, collect metrics, validate responses, apply transformations and filters, and process prompts in parallel and batches, all from the comfort of a shell.
 
+![Python Version](https://img.shields.io/badge/python-%3E%3D%203.13-blue)
 # quick usage and installation example
 
 ```
