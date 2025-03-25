@@ -1,53 +1,23 @@
-from typing import TYPE_CHECKING
+# In src/sekvo/providers/anthropic/generate.py
+import warnings
+from typing import Optional, Dict, Any
 
-from sekvo.config.settings import ENV_NAME, SEKVO_ENV_KEY, SekvoSettings
-from sekvo.providers import ProviderRegistry
-from sekvo.providers.base import BaseProvider
+# Import the new implementation
+from sekvo.providers.simplemind_adapter import AnthropicProvider as NewAnthropicProvider
 
-if TYPE_CHECKING:
-    from sekvo.config.settings import AnthropicConfig
-
-
-@ProviderRegistry.register("anthropic")
-class AnthropicProvider(BaseProvider):
-
-    def __init__(self, env_name: str | None = ENV_NAME) -> None:
-        settings = SekvoSettings.from_env(env_name) if env_name else SekvoSettings()
-        if not settings.anthropic:
-            raise ValueError(f"Anthropic configuration not found for env: {env_name} set {SEKVO_ENV_KEY} like 'export {SEKVO_ENV_KEY}=anthropic-dev'")
-        self.config: AnthropicConfig  = settings.anthropic
-
-    def validate_config(self) -> None:
-        required = {"api_key", "model"}
-        if not all(k in self.config for k in required):
-            raise ValueError(f"Missing required config: {required}")
-
-    @property
-    def client(self):  # noqa: ANN201
-        try:
-            import anthropic
-            return anthropic.Client(
-                api_key=self.config.api_key,
-                # **self.config.additional_params.model_dump()
-            )
-        except ImportError:
-            raise ImportError(
-                "Anthropic package not found. Install with: pip install '.[anthropic]'"
-            ) from None
-
-    async def generate(self, prompt: str, system_prompt: str) -> str:
-        # Prompt the model to summarize the text
-        params = self.config.additional_params
-        response = self.client.messages.create(
-            model=params.model,
-            max_tokens=params.max_tokens,
-            temperature=params.temperature,
-            system=system_prompt,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+# Create a compatibility class that inherits from the new implementation
+class AnthropicProvider(NewAnthropicProvider):
+    """
+    Anthropic provider (legacy import path).
+    This class exists for backwards compatibility.
+    """
+    
+    def __init__(self, env_name: Optional[str] = None, provider_name='anthropic', config: Optional[Dict[str, Any]] = None) -> None:
+        """Initialize with deprecation warning"""
+        warnings.warn(
+            "Importing from sekvo.providers.anthropic.generate is deprecated since version 0.1.1"
+            "Please import from sekvo.providers.simplemind_adapter instead.",
+            DeprecationWarning,
+            stacklevel=2
         )
-        return response.content[0].text
+        super().__init__(provider_name=provider_name, env_name=env_name, config=config)

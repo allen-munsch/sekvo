@@ -1,6 +1,6 @@
 [project]
 name = "sekvo"
-version = "0.1.0"
+version = "0.1.1"
 description = "Your project description"
 authors = []
 readme = "README.md"
@@ -12,7 +12,9 @@ dependencies = [
     "pydantic>=2.0.0",
     "click",
     "rich",
-    "pydantic-settings"
+    "pydantic-settings",
+    "simplemind>=0.3.3",
+    "anthropic>=0.49.0",
 ]
 
 [build-system]
@@ -55,11 +57,12 @@ packages = ["src/sekvo"]
 dependencies = [
   "pytest",
   "pytest-cov",
+  "pytest-asyncio",
 ]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest {args:tests}"
-test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=sekvo {args:tests}"
+test = "pytest {args:test}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=sekvo {args:test}"
 lint = "ruff check ."
 format = "ruff format ."
 typecheck = "mypy src/sekvo"
@@ -67,6 +70,14 @@ typecheck = "mypy src/sekvo"
 # Development environment with all extras
 [tool.hatch.envs.dev]
 features = ["dev", "all"]
+
+[tool.hatch.envs.default.env-vars]
+SEKVO_ENVIRONMENT = "anthropic-dev"
+SEKVO_ANTHROPIC_API_KEY = "test-anthropic-key"
+SEKVO_OPENAI_API_KEY = "test-openai-key"
+SEKVO_GROQ_API_KEY = "test-groq-key"
+SEKVO_OLLAMA_HOST_URL = "http://localhost:11434"
+
 
 [tool.ruff]
 # Enable pycodestyle (`E`), Pyflakes (`F`), and import sorting (`I`)
@@ -109,11 +120,11 @@ asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: marks tests as integration tests",
 ]
-testpaths = ["tests"]
+testpaths = ["test"]
 python_files = "test_*.py"
 python_classes = ["Test*", "*Tests"]
 python_functions = "test_*"
 
 [tool.coverage.run]
 source = ["sekvo"]
-omit = ["tests/*"]
+omit = ["test/*"]

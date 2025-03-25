@@ -42,6 +42,12 @@ sekvo anthropic.generate --json 'tell me a joke'
 curl https://nebkiso.com > page.txt
 echo 'What is this webpage about?\n' > prompt.txt
 cat prompt.txt page.txt | sekvo anthropic.generate
+
+
+# structured json merging
+
+jq -s 'add | unique' <(cat my-json-prompt.txt | sekvo anthropic.generate --raw) ../old-places.json >| merged-places.json
+
 ```
 
 ## Features

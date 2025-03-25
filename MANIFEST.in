@@ -1,0 +1,4 @@
+exclude venv_*/
+exclude venv_3131/*
+exclude dist/*
+exclude build/*

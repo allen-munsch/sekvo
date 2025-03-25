@@ -3,12 +3,11 @@ import json
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, List, TypeVar, Union
+from typing import List, TypeVar, Union, Optional, Dict, Any
 
-if TYPE_CHECKING:
-    from sekvo.providers.base import BaseProvider
+from simplemind.models import Message as SimpleMindMessage
+from simplemind.models import Conversation as SimpleMindConversation
 
-# Type for any provider that implements generate()
 T = TypeVar("T", bound="BaseProvider")
 
 
@@ -62,23 +61,30 @@ class BasePrompt:
             current_text = await provider.generate(current_text, self.system_prompt)
         return current_text
 
+    def to_simplemind_conversation(self) -> SimpleMindConversation:
+        """Convert this prompt to a SimpleMind conversation."""
+        conversation = SimpleMindConversation()
+        if self.system_prompt:
+            conversation.prepend_system_message(self.system_prompt)
+        conversation.add_message(role="user", text=self.text)
+        return conversation
+
     def __str__(self) -> str:
         return self.text
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(text='{self.text}', system_prompt='{self.system_prompt}')"  # noqa: E501
+        return f"{self.__class__.__name__}(text='{self.text}', system_prompt='{self.system_prompt}')"
 
 
 class Prompt(BasePrompt):
     """Standard prompt with basic piping functionality"""
-
     pass
 
 
 class ParallelPrompt(BasePrompt):
     """Process through multiple providers simultaneously"""
 
-    async def __or__(self, providers: list[T]) -> list[str]:
+    async def __or__(self, providers: List[T]) -> List[str]:
         tasks = [
             provider.generate(self.text, self.system_prompt) for provider in providers
         ]
@@ -87,9 +93,9 @@ class ParallelPrompt(BasePrompt):
 
 class MetricsPrompt(BasePrompt):
     """Prompt that collects performance metrics"""
-    def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.metrics: list[Metrics] = []
+        self.metrics: List[Metrics] = []
 
     async def __or__(self, provider: T) -> str:
         start = time.time()
@@ -98,8 +104,8 @@ class MetricsPrompt(BasePrompt):
 
         self.metrics.append(Metrics(
             provider=provider.__class__.__name__,
-            input_tokens=len(self.text.split()),
-            output_tokens=len(result.split()),
+            input_tokens=len(self.text.split()),  # Simple approximation
+            output_tokens=len(result.split()),    # Simple approximation
             duration=duration
         ))
         return result
@@ -157,14 +163,14 @@ class BatchPrompt(BasePrompt):
     """Process multiple prompts with rate limiting"""
 
     def __init__(
-        self, texts: list[str], system_prompt: str = "You are a helpful assistant."
+        self, texts: List[str], system_prompt: str = "You are a helpful assistant."
     ):
         super().__init__(texts[0], system_prompt)
         self.texts = texts
         self.batch_size = 10
         self.rate_limit = 1  # seconds between batches
 
-    async def __or__(self, provider: T) -> list[str]:
+    async def __or__(self, provider: T) -> List[str]:
         results = []
         for i in range(0, len(self.texts), self.batch_size):
             batch = self.texts[i : i + self.batch_size]
