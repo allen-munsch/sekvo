@@ -2,7 +2,7 @@
 Adapter for SimpleMind providers.
 This module provides classes that adapt SimpleMind providers to work with Sekvo.
 """
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -133,7 +133,62 @@ class SimpleMindAdapter(BaseProvider):
         )
         
         return response
+
     
+    async def generate_stream(self, prompt: str, system_prompt: Optional[str] = None) -> AsyncIterator[str]:
+        """
+        Generate streaming response from the provider.
+        
+        If the provider doesn't support streaming, falls back to regular generation
+        and returns the entire text as a single chunk.
+        """
+        params = self.config.get("additional_params", {})
+        model = params.get("model", self.DEFAULT_MODEL)
+        max_tokens = params.get("max_tokens", 1000)
+        temperature = params.get("temperature", 0.7)
+        
+        # Build appropriate kwargs based on provider
+        kwargs = {
+            "llm_model": model,
+            "temperature": temperature,
+        }
+        
+        if max_tokens:
+            kwargs["max_tokens"] = max_tokens
+            
+        # System prompts are handled differently by different providers
+        if system_prompt:
+            if self.NAME == "anthropic":
+                kwargs["system"] = system_prompt
+            else:
+                # For providers like OpenAI that use messages
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ]
+                kwargs["messages"] = messages
+        
+        # Check if the provider supports streaming
+        if self.supports_streaming and hasattr(self.simplemind_provider, 'generate_stream_text'):
+            # Use the streaming API
+            try:
+                async for token in self.simplemind_provider.generate_stream_text(
+                    prompt=prompt, 
+                    **kwargs
+                ):
+                    if token:  # Skip empty tokens
+                        yield token
+            except Exception as e:
+                # Fallback to non-streaming if streaming fails
+                yield f"Error in streaming: {str(e)}"
+        else:
+            # Fallback to non-streaming for providers that don't support it
+            complete_response = self.simplemind_provider.generate_text(
+                prompt=prompt, 
+                **kwargs
+            )
+            yield complete_response
+
     def structured_response(self, prompt: str, response_model: Type[T], **kwargs) -> T:
         """Get a structured response using SimpleMind's implementation."""
         params = self.config.get("additional_params", {})

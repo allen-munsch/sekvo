@@ -78,6 +78,15 @@ SEKVO_OPENAI_API_KEY = "test-openai-key"
 SEKVO_GROQ_API_KEY = "test-groq-key"
 SEKVO_OLLAMA_HOST_URL = "http://localhost:11434"
 
+[tool.hatch.build]
+exclude = [
+  "venv*/",
+  ".env/",
+  ".venv/",
+  "dist/",
+  "build/",
+  "*.egg-info/",
+]
 
 [tool.ruff]
 # Enable pycodestyle (`E`), Pyflakes (`F`), and import sorting (`I`)
